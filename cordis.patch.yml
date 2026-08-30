@@ -1,0 +1,7 @@
+# dsh-shutdown bundle patch: inserts the one-click shutdown plugin row.
+# After this bundle is added to a profile's `dsh.profile.bundles`, this row
+# mounts the Host half (package main -> lib/index.js) and is picked up by the
+# client module system as a browser row (package.json `dsh.client`).
+- insert:
+    - id: shutdown
+      name: dsh-shutdown
