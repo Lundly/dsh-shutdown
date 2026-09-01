@@ -4,4 +4,4 @@
 # client module system as a browser row (package.json `dsh.client`).
 - insert:
     - id: shutdown
-      name: dsh-shutdown
+      name: 'file:///D:\Projects\deepseek\dsh-shutdown\src\index.ts'

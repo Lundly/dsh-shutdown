@@ -62,7 +62,7 @@ const neverStyle: CSSProperties = {
 export function ShutdownHeaderAction(props: ShutdownHeaderActionProps): ReactNode {
   const { useShutdownPrefs, setConfirmDisabled, beginShutdown, t } = props
   const confirmDisabled = useShutdownPrefs(state => state.confirmDisabled)
-  const closed = useShutdownPrefs(state => state.closed)
+  const [closed, setClosed] = useState(false)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [never, setNever] = useState(false)
 
@@ -77,6 +77,7 @@ export function ShutdownHeaderAction(props: ShutdownHeaderActionProps): ReactNod
   const onConfirm = (): void => {
     if (never) setConfirmDisabled(true)
     setDialogOpen(false)
+    setClosed(true)
     beginShutdown()
   }
 

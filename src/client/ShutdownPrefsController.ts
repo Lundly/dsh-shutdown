@@ -9,8 +9,6 @@ const STORAGE_KEY = 'dsh-shutdown.confirmDisabled'
 export interface ShutdownPrefsState {
   /** Once true, closing dsh skips the confirmation dialog. */
   readonly confirmDisabled: boolean
-  /** Once true, the page renders the "dsh has shut down" overlay. */
-  readonly closed: boolean
 }
 
 /** Wrap a localStorage read so an unavailable or denied store degrades to "ask again". */
@@ -36,7 +34,6 @@ export class ShutdownPrefsController {
   /** uSES-safe state source shared by every contribution. */
   readonly store: SnapshotStore<ShutdownPrefsState> = createSnapshotStore<ShutdownPrefsState>({
     confirmDisabled: readConfirmDisabled(),
-    closed: false,
   })
 
   /** Whether the confirmation dialog is currently skipped. */
