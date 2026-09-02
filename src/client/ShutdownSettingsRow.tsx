@@ -1,4 +1,4 @@
-import type { CSSProperties, ReactNode } from 'react'
+import { useState, type CSSProperties, type ReactNode } from 'react'
 import type { InjectFace, PropsLocale, PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
 import type { ShutdownDialogInjected } from './HeaderAction.tsx'
 import { NS } from './locales.ts'
@@ -13,6 +13,8 @@ const rowStyle: CSSProperties = {
   alignItems: 'flex-start',
   gap: 10,
   cursor: 'pointer',
+  padding: '10px',
+  marginRight: '5px'
 }
 
 const textStyle: CSSProperties = {
@@ -33,6 +35,19 @@ const hintStyle: CSSProperties = {
   color: 'var(--dsw-alias-label-secondary)',
 }
 
+const boxStyle: CSSProperties = {
+  display: 'flex',
+  flexDirection: 'row',
+  justifyContent: 'space-between'
+}
+
+const checkBoxStyle: CSSProperties = {
+    accentColor: 'var(--dsw-alias-brand-primary);',
+    width: '18px',
+    height: '18px',
+    cursor: 'pointer',
+}
+
 /**
  * General-settings row that re-enables the shutdown confirmation prompt. The
  * checkbox mirrors the persistent "don't ask again" preference: checked means
@@ -42,19 +57,22 @@ const hintStyle: CSSProperties = {
  */
 export function ShutdownSettingsRow(props: ShutdownSettingsRowProps): ReactNode {
   const { useShutdownPrefs, setConfirmDisabled, t } = props
-  const confirmDisabled = useShutdownPrefs(state => state.confirmDisabled)
+  const [confirmPrefs, setConfirmPrefs] = useState(useShutdownPrefs(state => state.confirmDisabled))
 
   return (
-    <label style={rowStyle}>
-      <input
-        type="checkbox"
-        checked={!confirmDisabled}
-        onChange={event => { setConfirmDisabled(!event.target.checked) }}
-      />
+    <div className="shutdown-prefer" style={boxStyle}>
       <span style={textStyle}>
         <span style={labelStyle}>{t('settings.label')}</span>
-        <span style={hintStyle}>{confirmDisabled ? t('settings.disabledHint') : t('settings.hint')}</span>
+        <span style={hintStyle}>{confirmPrefs ? t('settings.disabledHint') : t('settings.hint')}</span>
       </span>
-    </label>
+      <label style={rowStyle}>
+        <input
+          style={checkBoxStyle}
+          type="checkbox"
+          checked={!confirmPrefs}
+          onChange={event => { setConfirmPrefs(!confirmPrefs); setConfirmDisabled(!event.target.checked) }}
+        />
+      </label>
+    </div>
   )
 }
