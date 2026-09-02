@@ -1,7 +1,7 @@
 {
   "name": "dsh-shutdown",
   "description": "Web one-click shutdown for DeepSeek Harness: a Session-Header close button, confirmation dialog, and safe host process exit.",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "type": "module",
   "main": "lib/index.js",
