@@ -36,7 +36,7 @@ export default defineConfig([
   // 浏览器半：lazy-CJS 工厂产物（loader 约定格式，仓外插件需自行复现）：
   //   window.__ModuleLoader__.load({ id: "<pkg>", factory: (require) => { ...; return module.exports; } })
   {
-    entry: { client: 'src/client/index.tsx' },
+    entry: { client: 'src/client/index.ts' },
     outDir: 'lib',
     format: 'cjs',
     platform: 'browser',
