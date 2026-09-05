@@ -1,62 +1,44 @@
-/**
- * Browser plugin owning the dsh-shutdown UI: the Session Header close button,
- * its confirmation dialog, the persistent "don't ask again" preference, the
- * General-settings re-enable row, and the shut-down overlay.
- * @module dsh-shutdown/client
- */
+import type { ClientContext } from '../types'
+import { NS, dictionaries } from './locales'
+import { ShutdownHeaderAction } from './HeaderAction'
+import { ShutdownSettingsCard } from './SettingsCard'
+import { injectStyles } from './styles'
 
-import type { Context as ClientContext } from '@deepseek-ai/cordis'
-import type {} from '@deepseek-ai/dsh-client-locale/client'
-import type {} from '@deepseek-ai/dsh-client-ui-conversation/client'
-import type {} from '@deepseek-ai/dsh-client-ui-renderer/client'
-import type {} from '@deepseek-ai/dsh-client-ui-session/client'
-import type {} from '@deepseek-ai/dsh-client-ui-settings/client'
-import type { ShutdownDialogInjected } from './HeaderAction.tsx'
-import { ShutdownHeaderAction } from './HeaderAction.tsx'
-import { ShutdownSettingsRow } from './ShutdownSettingsRow.tsx'
-import { ShutdownPrefsController } from './ShutdownPrefsController.ts'
-import { en, NS, zh, type ShutdownLocaleKey } from './locales.ts'
-import { requestShutdown } from './requestShutdown.ts'
-
-declare module '@deepseek-ai/dsh-client-ui-slots' {
-  interface LocaleNamespaceMap {
-    'dsh-shutdown': ShutdownLocaleKey
-  }
-}
-
-/** Services required before the browser plugin can mount. */
+/** 依赖的浏览器端服务：slots（槽位注册表）与 locale（词典注册） */
 export const inject = ['slots', 'locale']
 
-/**
- * Mount the header action, settings row, and their shared shutdown state.
- * @param ctx - browser context carrying the slots and locale services.
- */
 export function apply(ctx: ClientContext): void {
-  const controller = new ShutdownPrefsController()
-  ctx.effect(() => ctx.locale.register(NS, { zh, en }), 'dsh-shutdown: dictionaries')
+  injectStyles()
 
-  const beginShutdown = (): void => {
-    controller.markClosed()
-    requestShutdown()
-  }
-  const injected = (): ShutdownDialogInjected => ({
-    hooks: { shutdownPrefs: controller.store },
-    setConfirmDisabled: (value: boolean) => { controller.setConfirmDisabled(value) },
-    beginShutdown,
-  })
+  ctx.effect(() => {
+    ctx.locale.register(NS, dictionaries)
+  }, 'dsh-shutdown: locale dictionaries')
 
-  ctx.slots.inject('conversation.session.header.utilities', () => ctx.slots.register({
-    name: 'conversation.session.header.utilities',
-    id: 'shutdown',
-    locale: NS,
-    inject: injected,
-  }, ShutdownHeaderAction))
+  // 顶栏关闭按钮：与「Session 日志」下载按钮同槽（右侧工具区，升序排列），
+  // order 取大值确保排在其右边——即整个界面最右上角。
+  ctx.slots.inject('conversation.session.header.utilities', () =>
+    ctx.slots.register(
+      {
+        name: 'conversation.session.header.utilities',
+        id: 'dsh-shutdown',
+        order: 10000,
+        locale: NS,
+      },
+      ShutdownHeaderAction,
+    ),
+  )
 
-  ctx.slots.inject('settings.general.item', () => ctx.slots.register({
-    name: 'settings.general.item',
-    id: 'shutdown-confirm',
-    order: -10,
-    locale: NS,
-    inject: injected,
-  }, ShutdownSettingsRow))
+  // 设置页 → Plugin configuration：卡片用于重新开启「关闭前确认提示」。
+  ctx.slots.inject('settings.general.item', () =>
+    ctx.slots.register(
+      {
+        name: 'settings.general.item',
+        id: 'dsh-shutdown',
+        order: 120,
+        key: NS,
+        locale: NS,
+      },
+      ShutdownSettingsCard,
+    ),
+  )
 }

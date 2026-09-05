@@ -1,64 +1,48 @@
 # dsh-shutdown
 
-面向 DeepSeek Harness web 端的一键关闭插件：在 Session 头部右上角新增一个与关闭按钮，经确认后**安全结束整个 dsh 进程**（走 launcher 的 `ctx.appExit`，先 dispose 整棵 Cordis 树再退出），并尝试关闭浏览器页面；若标签页未关闭，页面会渲染「dsh 已关闭」画面兜底。
+为 [DeepSeek Harness (dsh)](https://github.com/deepseek-ai/deepseek-harness) 的 Web UI 添加**右上角关闭按钮**的插件：
 
-特性：
+- 在 Web 界面右上角新增一个「关闭」按钮
+- 点击后弹出确认提示（可选择「不再显示」，之后点击按钮将直接关闭；可在设置中重新开启）
+- 确认后**安全结束整个 dsh 进程**（走 dsh launcher 的优雅退出路径：插件树逆序清理、Web 服务关闭后进程退出），并尝试自动关闭浏览器标签页
+- 若浏览器策略阻止脚本关闭标签页，页面会渲染「dsh 已安全关闭」的兜底画面，提醒你手动关闭标签页
 
-- 顶部「关闭」胶囊按钮。
-- 点击后弹出确认对话框，含「不再显示」选项；勾选后下次点击直接关闭。
-- 「设置 → General」中提供重新开启确认提示的开关。
-- 进程安全退出；标签页未能关闭时渲染全屏已关闭画面。
+## 安装（本地目录方式）
 
-## 布局要求
-
-本仓库是独立的插件 git 仓库，需与 `deepseek-harness` checkout **平级**，插件引用 dsh 源码的类型与打包产物：
-
-```
-deepseek\
-├── deepseek-harness\     # fork：保持干净，随时同步上游
-└── dsh-shutdown\         # ★ 本插件仓库
-```
-
-## 本地开发
-
-前置：Node ^22.19 或 ≥24，pnpm 可用，fork 已完成 `pnpm install && pnpm run build`（插件通过 tsc 项目引用继承 fork 的类型图）。
+在本仓库的**上级目录**执行（首次会自动创建名为 `shutdown` 的 profile，并把本插件作为 bundle 追加进去）：
 
 ```sh
-cd ../deepseek-harness && pnpm install && pnpm run build
-cd ../dsh-shutdown
-pnpm install && pnpm run typecheck
-pnpm run build            # 产出 lib/index.js + lib/client.js
+dsh plugin --profile web add ./dsh-shutdown
 ```
 
-## 安装与验证
+> 相对路径以执行命令时所在目录为锚点，也可以直接用绝对路径。
 
-**快速迭代**（免安装，tsx 直跑源码；建一个临时 overlay 引用本插件 host 源码）：
-
-```yaml
-# overlay.cordis.yml
-- insert:
-    - id: shutdown
-      name: 'path/to/dsh-shutdown/src/index.ts'
-```
+验证安装：
 
 ```sh
-cd ../deepseek-harness
-pnpm dsh web --patch ..\overlay.cordis.yml
+dsh plugin --profile web list
 ```
 
-**组合包全流程**（需要在插件目录先 `pnpm run build`，使 `lib/` 就绪）：
+启动 dsh 后浏览器打开 Web 界面，即可在右上角看到「关闭」按钮。
+
+### 移除
 
 ```sh
-cd dsh-shutdown
-pnpm install && pnpm run build
-dsh plugin --profile <名> add .        # 相对路径 spec 锚定到调用目录
-dsh --profile <名> --dump-config       # 应出现 "# == dsh-shutdown" 层
-dsh --profile <名>                     # 启动后右上角出现关闭按钮
+dsh plugin --profile web remove dsh-shutdown
 ```
 
-> pnpm ≥10 默认拦截 git 安装时的 `prepare` 构建脚本，首次 `add github:...` 会失败并给出 `allowBuilds` 提示；按提示把输出的包键加入该 profile 的 `pnpm-workspace.yaml` 后重试。本地 `add .`（已含 `lib/`）通常无需该授权。
+bundle 成员变化需重启 profile 后生效。
 
-## 说明
+## 从源码构建
 
-- 客户端（浏览器）构建采用自带的 `tsdown` 配置，产出与 dsh-client-modules 兼容的 `lib/client.js`（`window.__ModuleLoader__.load` 工厂 + baseline 外部化）。按钮样式以内联 `--dsw-*` token 复现，无需 CSS 模块管线。
-- 关闭动作不暴露模型可见的 `/shutdown` 命令，仅作为明确的用户手势，避免把「杀掉进程」交给 agent。
+```sh
+pnpm install   # 仅构建工具（tsdown / typescript / 类型声明），install 时自动 prepare 构建
+pnpm build     # 产物：lib/index.js（Host 半，Node ESM）+ lib/client.js（浏览器半，ModuleLoader CJS 工厂）
+pnpm typecheck
+```
+
+本插件不依赖 dsh 源码即可构建：宿主提供的包（`@deepseek-ai/cordis`、`react` 等）全部以 peer/external 方式声明，运行时分别由 dsh 宿主与浏览器端模块加载器注入，产物零第三方运行时代码。
+
+## License
+
+MIT

@@ -1,117 +1,99 @@
-import { useState } from 'react'
-import type { CSSProperties, ReactNode } from 'react'
-import type { ObservableSnapshot } from '@deepseek-ai/dsh-client-store'
-import { Button, IconCloseOutline16, Modal } from '@deepseek-ai/dsh-client-ui-primitives'
-import type { InjectFace, PropsLocale, PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
-import { NS } from './locales.ts'
-import { ShutdownClosedOverlay } from './ShutdownClosedOverlay.tsx'
-import type { ShutdownPrefsState } from './ShutdownPrefsController.ts'
+import { useCallback, useState } from 'react'
+import { ConfirmDialog } from './ConfirmDialog'
+import { ErrorBoundary } from './ErrorBoundary'
+import { composeT, detectLocale, type Translator } from './locales'
+import { requestAppExit } from './shutdown'
+import { ShutdownScreen } from './ShutdownScreen'
+import { isConfirmSkipped, setConfirmSkipped } from './storage'
+import { cls } from './styles'
 
-/** Browser operations and state injected into the Session Header contribution. */
-export interface ShutdownDialogInjected {
-  hooks: { shutdownPrefs: ObservableSnapshot<ShutdownPrefsState> }
-  setConfirmDisabled: (value: boolean) => void
-  beginShutdown: () => void
+export interface HeaderActionProps {
+  t?: Translator
+  [key: string]: unknown
 }
 
-export type ShutdownHeaderActionProps =
-  PropsRuntime<'conversation.session.header.utilities'>
-  & PropsLocale<typeof NS>
-  & InjectFace<ShutdownDialogInjected>
-
-/** Capsule styling matching the Session-log Header button (SessionLogButton.module.css). */
-const buttonStyle: CSSProperties = {
-  display: 'inline-flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  minWidth: 111,
-  height: 32,
-  padding: '6px 12px',
-  gap: 4,
-  border: '1px solid var(--dsw-alias-border-l2)',
-  borderRadius: 18,
-  color: 'var(--dsw-alias-label-primary)',
-  background: 'transparent',
-  fontFamily: 'var(--dsw-font-family)',
-  fontSize: 13,
-  fontWeight: 400,
-  lineHeight: '20px',
-  cursor: 'pointer',
-  flex: 'none',
+/** 叉号图标：与「Session 日志」按钮的图标尺寸一致（12px）。 */
+function CloseIcon() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <path
+        d="M4 4l8 8M12 4l-8 8"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+      />
+    </svg>
+  )
 }
 
-const labelStyle: CSSProperties = {
-  whiteSpace: 'nowrap',
-  flex: 'none',
-}
+type Phase = 'idle' | 'confirm' | 'error'
 
-const neverStyle: CSSProperties = {
-  display: 'inline-flex',
-  alignItems: 'center',
-  gap: 8,
-  cursor: 'pointer',
-}
+function HeaderActionInner(props: HeaderActionProps) {
+  const tr: Translator = composeT(props.t, detectLocale())
 
-/**
- * Session Header close button, its confirmation dialog, and the shut-down
- * overlay. Skips the dialog when "don't ask again" is set; otherwise asks, and
- * can persist that preference from the dialog's checkbox.
- * @param props - runtime slot props, localized copy, and injected actions.
- * @returns the header capsule plus its modal and the shut-down overlay.
- */
-export function ShutdownHeaderAction(props: ShutdownHeaderActionProps): ReactNode {
-  const { useShutdownPrefs, setConfirmDisabled, beginShutdown, t } = props
-  const confirmDisabled = useShutdownPrefs(state => state.confirmDisabled)
-  const [closed, setClosed] = useState(false)
-  const [dialogOpen, setDialogOpen] = useState(false)
-  const [never, setNever] = useState(false)
+  const [phase, setPhase] = useState<Phase>('idle')
+  const [screen, setScreen] = useState(false)
 
-  const onButtonClick = (): void => {
-    if (confirmDisabled) {
-      beginShutdown()
+  const runShutdown = useCallback(async () => {
+    const accepted = await requestAppExit()
+    if (!accepted) {
+      // Host 未确认受理：留在弹窗并展示错误，允许重试
+      setPhase('error')
       return
     }
-    setDialogOpen(true)
-  }
+    // 受理成功：先尝试关闭标签页（在事件时序上尽早调用，成功率更高），
+    // 若浏览器策略阻止脚本关窗，则用兜底画面告知 dsh 已退出。
+    window.close()
+    setTimeout(() => setScreen(true), 500)
+  }, [])
 
-  const onConfirm = (): void => {
-    if (never) setConfirmDisabled(true)
-    setDialogOpen(false)
-    setClosed(true)
-    beginShutdown()
-  }
+  const onButtonClick = useCallback(() => {
+    if (isConfirmSkipped()) {
+      void runShutdown()
+      return
+    }
+    setPhase('confirm')
+  }, [runShutdown])
+
+  const onConfirm = useCallback(
+    (dontAskAgain: boolean) => {
+      if (dontAskAgain) setConfirmSkipped(true)
+      setPhase('idle')
+      void runShutdown()
+    },
+    [runShutdown],
+  )
 
   return (
     <>
-      {closed ? <ShutdownClosedOverlay t={t} /> : null}
       <button
         type="button"
-        style={buttonStyle}
+        className={cls.btn}
+        title={tr('header.tooltip')}
+        aria-label={tr('header.tooltip')}
         onClick={onButtonClick}
-        aria-label={t('header.ariaLabel')}
-        title={t('header.label')}
       >
-        <span style={labelStyle}>{t('header.label')}</span>
-        <IconCloseOutline16 size={12} />
+        <span>{tr('header.action')}</span>
+        <CloseIcon />
       </button>
-      <Modal
-        open={dialogOpen}
-        onClose={() => { setDialogOpen(false) }}
-        title={t('dialog.title')}
-        description={t('dialog.description')}
-        closeLabel={t('dialog.cancel')}
-        footer={(
-          <>
-            <Button variant="ghost" onClick={() => { setDialogOpen(false) }}>{t('dialog.cancel')}</Button>
-            <Button variant="primary" onClick={onConfirm}>{t('dialog.confirm')}</Button>
-          </>
-        )}
-      >
-        <label style={neverStyle}>
-          <input type="checkbox" checked={never} onChange={event => { setNever(event.target.checked) }} />
-          <span>{t('dialog.never')}</span>
-        </label>
-      </Modal>
+      {(phase === 'confirm' || phase === 'error') && (
+        <ConfirmDialog
+          t={tr}
+          error={phase === 'error'}
+          onCancel={() => setPhase('idle')}
+          onConfirm={onConfirm}
+        />
+      )}
+      {screen && <ShutdownScreen t={tr} />}
     </>
+  )
+}
+
+/** 顶栏「关闭 dsh」按钮：注册在 conversation.session.header.utilities 槽位。 */
+export function ShutdownHeaderAction(props: HeaderActionProps) {
+  return (
+    <ErrorBoundary>
+      <HeaderActionInner {...props} />
+    </ErrorBoundary>
   )
 }

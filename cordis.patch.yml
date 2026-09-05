@@ -1,7 +1,8 @@
-# dsh-shutdown bundle patch: inserts the one-click shutdown plugin row.
-# After this bundle is added to a profile's `dsh.profile.bundles`, this row
-# mounts the Host half (package main -> lib/index.js) and is picked up by the
-# client module system as a browser row (package.json `dsh.client`).
+# 本文件由 package.json 的 `dsh.bundle.patch` 指向，是本插件作为 bundle 贡献的 patch 层：
+# 当本包出现在 profile 的 `dsh.profile.bundles` 时（`dsh plugin --profile <name> add dsh-shutdown`
+# 后自动追加），此层被叠加到 effective tree 中，Host 半由 loader 按行挂载。
+# 浏览器半无需在此声明：由 package.json 的 `dsh.client` 声明自动发现，
+# 经 /plugins/dsh-shutdown/client.js 提供给页面。
 - insert:
-    - id: shutdown
+    - id: dsh-shutdown
       name: 'file:///D:\Projects\deepseek\dsh-shutdown\src\index.ts'

@@ -1,65 +1,56 @@
-/**
- * @deepseek-ai/dsh-shutdown — host half of the one-click shutdown bundle.
- *
- * Owns the single Host operation behind the Web close button: an exact
- * `POST /api/shutdown` fetch route that requests bounded process exit through
- * the launcher's `ctx.appExit`. `appExit` disposes the whole Cordis tree, then
- * exits, so termination is graceful (no half-started work left running).
- *
- * The route is reached only from the browser client plugin (a deliberate user
- * gesture), so there is no model-visible `/shutdown` command.
- * @module dsh-shutdown
- */
+import type { AppExit, HostContext } from './types'
 
-import type { Context } from '@deepseek-ai/cordis'
+export const name = 'dsh-shutdown'
 
-/** Stable Cordis plugin name. */
-export const name = 'shutdown'
+/** 与浏览器半 src/client/shutdown.ts 中的 EXIT_ROUTE 保持一致 */
+const EXIT_ROUTE = '/api/dsh-shutdown.exit'
 
-/** Services required before the shutdown route can mount. */
 export const inject = ['connection']
 
-/** Exact browser-addressable shutdown path, served through the shared `/api` channel. */
-export const SHUTDOWN_PATH = '/api/shutdown'
-
-/** The launcher's bounded process-exit request (`ctx.appExit`). */
-type AppExit = (code: number) => void
-
-/** The `connection.fetch.register` slot this plugin consumes (typed locally). */
-interface ShutdownConnection {
-  readonly fetch: {
-    register(route: {
-      readonly path: string
-      readonly methods: readonly ('POST')[]
-      readonly fetch: (request: Request) => Promise<Response>
-    }): () => Promise<void>
-  }
+export function apply(ctx: HostContext): void {
+  ctx.connection.fetch.register({
+    path: EXIT_ROUTE,
+    methods: ['POST'],
+    requestBody: 'buffered',
+    fetch: async () => {
+      // 先把响应送回浏览器（浏览器半在收到 2xx 后才尝试关标签页/显示兜底画面），
+      // 再请求退出——dispose 会立刻断开所有浏览器连接。
+      setTimeout(() => requestExit(ctx), 50)
+      return new Response(JSON.stringify({ ok: true }), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      })
+    },
+  })
 }
 
 /**
- * Register the shutdown route and request graceful process exit.
- * @param ctx - Host context carrying the `connection` service.
+ * 安全结束 dsh：
+ * - 首选 launcher 提供的 appExit —— 由 shutdown controller 接线，
+ *   在 cordis 根 fiber dispose（所有插件逆序清理、webServer close）后自然退出；
+ * - 非 launcher 宿主没有 appExit 时退回 SIGTERM（launcher 已注册信号处理，同样走优雅退出），
+ *   并保留一个不被等待的硬退出兜底，避免信号不可用（如部分 Windows 环境）时进程残留。
  */
-export function apply(ctx: Context): void {
-  const exit = ctx.get('appExit') as AppExit | undefined
-  if (exit === undefined) {
-    throw new Error('dsh-shutdown: the launcher must provide ctx.appExit before the tree mounts')
+function requestExit(ctx: HostContext): void {
+  let exit: AppExit | undefined
+  try {
+    exit = ctx.get('appExit') as AppExit | undefined
+  } catch {
+    exit = undefined
   }
-  const connection = ctx.get('connection') as ShutdownConnection | undefined
-  if (connection === undefined) {
-    throw new Error('dsh-shutdown: the connection service is missing; this bundle mounts only on the Web surface')
+  if (typeof exit === 'function') {
+    exit(0)
+    return
   }
-  connection.fetch.register({
-    path: SHUTDOWN_PATH,
-    methods: ['POST'],
-    fetch: async () => {
-      // Respond first, then exit: the browser should observe success before
-      // the tree teardown closes its connection.
-      const response = new Response(JSON.stringify({ ok: true }), {
-        headers: { 'content-type': 'application/json' },
-      })
-      setImmediate(() => { exit(0) })
-      return response
-    },
-  })
+
+  try {
+    process.kill(process.pid, 'SIGTERM')
+  } catch {
+    // ignore：信号发送失败时由下方兜底退出
+  }
+  const fallback = setTimeout(() => {
+    process.exit(0)
+  }, 4500)
+  // 不阻止优雅退出路径自行结束进程；若进程仍在，这里保证最终退出
+  fallback.unref?.()
 }
