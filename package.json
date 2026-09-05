@@ -1,6 +1,6 @@
 {
   "name": "dsh-shutdown",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "为 DeepSeek Harness (dsh) Web UI 添加右上角关闭按钮：确认后尝试关闭浏览器标签页，并安全结束 dsh 进程",
   "type": "module",
   "license": "MIT",
