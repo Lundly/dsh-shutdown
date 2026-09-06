@@ -88,6 +88,19 @@ export interface SettingsScopeBinder {
   bind<T>(spec: { namespace: string }): SettingsScope<T>
 }
 
+/**
+ * shell.overlay（root scope）槽位组件收到的标准 props 之一：会话列表状态选择器。
+ * 只声明本插件实际读取的成员——current（当前会话 id）与 blank（是否为未产生
+ * 回合的新会话，与宿主 ConversationRoot 的 summaryBlank 判定同源）。
+ */
+export interface SessionsStateLike {
+  /** 当前激活的会话 id；hero（新建会话）相位下为 undefined */
+  current?: string
+  byId?: Record<string, { blank?: boolean } | undefined>
+}
+
+export type UseSessions = <T>(selector: (state: SessionsStateLike) => T) => T
+
 /** 浏览器半收到的 cordis 客户端上下文。 */
 export interface ClientContext {
   slots: SlotsService

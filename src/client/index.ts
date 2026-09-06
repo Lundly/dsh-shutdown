@@ -1,6 +1,7 @@
 import type { ClientContext, ShutdownSettings } from '../types'
 import { NS, dictionaries } from './locales'
 import { ShutdownHeaderAction } from './HeaderAction'
+import { ShutdownHeroAction } from './HeroAction'
 import { SETTINGS_NAMESPACE, bindConfirmScope } from './storage'
 import { ShutdownSettingsCard } from './SettingsCard'
 import { injectStyles } from './styles'
@@ -32,6 +33,21 @@ export function apply(ctx: ClientContext): void {
         locale: NS,
       },
       ShutdownHeaderAction,
+    ),
+  )
+
+  // 浮层关闭按钮：新建会话（hero/blank 相位）时宿主隐藏整个会话头部，
+  // 顶栏槽位不会被渲染——故在全局浮层 shell.overlay 补一个入口，仅在
+  // hero 相位渲染右上角按钮，普通会话相位自动隐藏以避免与顶栏按钮重叠。
+  ctx.slots.inject('shell.overlay', () =>
+    ctx.slots.register(
+      {
+        name: 'shell.overlay',
+        id: 'dsh-shutdown',
+        order: 10000,
+        locale: NS,
+      },
+      ShutdownHeroAction,
     ),
   )
 

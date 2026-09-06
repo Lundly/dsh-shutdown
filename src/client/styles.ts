@@ -22,6 +22,23 @@ const css = `
 .dsh-shutdown-btn:hover:not(:disabled) {
   background: var(--dsw-alias-interactive-bg-hover, rgba(0, 0, 0, 0.05));
 }
+.dsh-shutdown-hero-anchor {
+  position: absolute; top: 10px; right: 12px;
+  display: flex;
+}
+.dsh-shutdown-hero-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 32px; height: 32px; padding: 0;
+  border: 0.5px solid var(--dsw-alias-border-l4, rgba(0, 0, 0, 0.12));
+  border-radius: 18px;
+  color: var(--dsw-alias-label-primary, #1f2329);
+  background: transparent;
+  font-family: var(--dsw-font-family, inherit);
+  cursor: pointer;
+}
+.dsh-shutdown-hero-btn:hover:not(:disabled) {
+  background: var(--dsw-alias-interactive-bg-hover, rgba(0, 0, 0, 0.05));
+}
 .dsh-shutdown-overlay {
   position: fixed; inset: 0; z-index: 2147483000;
   display: flex; align-items: center; justify-content: center;
@@ -106,6 +123,8 @@ const css = `
 
 export const cls = {
   btn: "dsh-shutdown-btn",
+  heroAnchor: "dsh-shutdown-hero-anchor",
+  heroBtn: "dsh-shutdown-hero-btn",
   overlay: "dsh-shutdown-overlay",
   card: "dsh-shutdown-card",
   cardTitle: "dsh-shutdown-card-title",
