@@ -1,14 +1,21 @@
-import type { ClientContext } from '../types'
+import type { ClientContext, ShutdownSettings } from '../types'
 import { NS, dictionaries } from './locales'
 import { ShutdownHeaderAction } from './HeaderAction'
+import { SETTINGS_NAMESPACE, bindConfirmScope } from './storage'
 import { ShutdownSettingsCard } from './SettingsCard'
 import { injectStyles } from './styles'
 
-/** 依赖的浏览器端服务：slots（槽位注册表）与 locale（词典注册） */
-export const inject = ['slots', 'locale']
+/**
+ * 依赖的浏览器端服务：slots（槽位注册表）、locale（词典注册）、
+ * settingsScope（偏好持久化作用域）。remote 携带 settings 的失效转发，
+ * 是 settingsScope 订阅的载体（与官方 ui-theme 插件的声明一致）。
+ */
+export const inject = ['slots', 'locale', 'remote', 'settingsScope']
 
 export function apply(ctx: ClientContext): void {
   injectStyles()
+
+  bindConfirmScope(ctx.settingsScope?.bind<ShutdownSettings>({ namespace: SETTINGS_NAMESPACE }))
 
   ctx.effect(() => {
     ctx.locale.register(NS, dictionaries)
