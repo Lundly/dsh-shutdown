@@ -5,4 +5,4 @@
 # 经 /plugins/dsh-shutdown/client.js 提供给页面。
 - insert:
     - id: dsh-shutdown
-      name: 'file:///D:\Projects\deepseek\dsh-shutdown\src\index.ts'
+      name: dsh-shutdown
