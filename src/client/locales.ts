@@ -14,7 +14,6 @@ const zh: Record<string, string> = {
   'screen.hint': '浏览器标签页未能自动关闭，您可以手动关闭本标签页',
   'settings.title': '关闭 DSH',
   'settings.description': '控制点击「关闭」按钮时是否弹出确认提示',
-  'settings.confirm': '点击「关闭」按钮时弹出确认提示',
 }
 
 const en = {
@@ -31,7 +30,6 @@ const en = {
   'screen.hint': 'This tab could not close itself. You can close it manually',
   'settings.title': 'Shut down DSH',
   'settings.description': 'Whether clicking the "Close" button asks for confirmation first',
-  'settings.confirm': 'Ask for confirmation before shutting down',
 }
 
 export const dictionaries: Record<string, Record<string, string>> = { zh, en }

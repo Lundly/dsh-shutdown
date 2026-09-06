@@ -22,10 +22,12 @@ function SettingsCardInner({ t }: SettingsCardProps) {
   useEffect(() => watchConfirmPreference(() => setConfirmOn(!isConfirmSkipped())), [])
 
   return (
-    <div className={cls.settings}>
-      <h4 className={cls.settingsTitle}>{tr('settings.title')}</h4>
-      <p className={cls.settingsDesc}>{tr('settings.description')}</p>
-      <label className={cls.settingsRow}>
+    <div className={cls.settingsRow}>
+      <div className={cls.settingsRowText}>
+        <div className={cls.settingsTitle}>{tr('settings.title')}</div>
+        <div className={cls.settingsDesc}>{tr('settings.description')}</div>
+      </div>
+      <label className={cls.settingsCheck}>
         <input
           type="checkbox"
           checked={confirmOn}
@@ -35,7 +37,6 @@ function SettingsCardInner({ t }: SettingsCardProps) {
             setConfirmSkipped(!on)
           }}
         />
-        <span>{tr('settings.confirm')}</span>
       </label>
     </div>
   )

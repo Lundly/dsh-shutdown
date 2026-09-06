@@ -78,41 +78,53 @@ const css = `
 }
 .dsh-shutdown-screen-title { margin: 0; font-size: 20px; font-weight: 600; }
 .dsh-shutdown-screen-hint { margin: 0; font-size: 13px; color: var(--dsw-alias-label-secondary, #5b616b); }
-.dsh-shutdown-settings {
+.dsh-shutdown-settings-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
   padding: 12px 0;
   font-family: var(--dsw-font-family, inherit);
+}
+.dsh-shutdown-settings-row-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.dsh-shutdown-settings-title {
+  margin: 0; font-size: 14px; line-height: 20px; font-weight: 400;
   color: var(--dsw-alias-label-primary, #1f2329);
 }
-.dsh-shutdown-settings-title { margin: 0 0 6px; font-size: 14px; font-weight: 600; }
-.dsh-shutdown-settings-desc { margin: 0 0 10px; font-size: 12px; line-height: 18px; color: var(--dsw-alias-label-secondary, #5b616b); }
-.dsh-shutdown-settings-row {
-  display: flex; align-items: center; gap: 8px;
-  font-size: 13px; cursor: pointer; user-select: none;
+.dsh-shutdown-settings-desc {
+  margin: 0; font-size: 12px; line-height: 18px;
+  color: var(--dsw-alias-label-tertiary, #8f959e);
 }
-.dsh-shutdown-settings-row input { width: 14px; height: 14px; margin: 0; cursor: pointer; accent-color: var(--dsw-alias-bg-brand, #4c6ef5); }
-`
+.dsh-shutdown-settings-check {
+  display: flex; align-items: center; justify-content: center;
+  width: 40px; height: 40px;
+  cursor: pointer;
+}
+.dsh-shutdown-settings-check input {
+  flex-shrink: 0; width: 18px; height: 18px; margin: 2px 0 0; cursor: pointer;
+  accent-color: var(--dsw-alias-bg-brand, #4c6ef5);
+}
+`;
 
 export const cls = {
-  btn: 'dsh-shutdown-btn',
-  overlay: 'dsh-shutdown-overlay',
-  card: 'dsh-shutdown-card',
-  cardTitle: 'dsh-shutdown-card-title',
-  cardDesc: 'dsh-shutdown-card-desc',
-  cardError: 'dsh-shutdown-card-error',
-  checkRow: 'dsh-shutdown-check-row',
-  footer: 'dsh-shutdown-footer',
-  btnGhost: 'dsh-shutdown-btn-ghost',
-  btnPrimary: 'dsh-shutdown-btn-primary',
-  screen: 'dsh-shutdown-screen',
-  spinner: 'dsh-shutdown-spinner',
-  check: 'dsh-shutdown-check',
-  screenTitle: 'dsh-shutdown-screen-title',
-  screenHint: 'dsh-shutdown-screen-hint',
-  settings: 'dsh-shutdown-settings',
-  settingsTitle: 'dsh-shutdown-settings-title',
-  settingsDesc: 'dsh-shutdown-settings-desc',
-  settingsRow: 'dsh-shutdown-settings-row',
-} as const
+  btn: "dsh-shutdown-btn",
+  overlay: "dsh-shutdown-overlay",
+  card: "dsh-shutdown-card",
+  cardTitle: "dsh-shutdown-card-title",
+  cardDesc: "dsh-shutdown-card-desc",
+  cardError: "dsh-shutdown-card-error",
+  checkRow: "dsh-shutdown-check-row",
+  footer: "dsh-shutdown-footer",
+  btnGhost: "dsh-shutdown-btn-ghost",
+  btnPrimary: "dsh-shutdown-btn-primary",
+  screen: "dsh-shutdown-screen",
+  spinner: "dsh-shutdown-spinner",
+  check: "dsh-shutdown-check",
+  screenTitle: "dsh-shutdown-screen-title",
+  screenHint: "dsh-shutdown-screen-hint",
+  settingsRow: "dsh-shutdown-settings-row",
+  settingsRowText: "dsh-shutdown-settings-row-text",
+  settingsCheck: "dsh-shutdown-settings-check",
+  settingsTitle: "dsh-shutdown-settings-title",
+  settingsDesc: "dsh-shutdown-settings-desc",
+} as const;
 
 export function injectStyles(): void {
   if (typeof document === 'undefined') return
