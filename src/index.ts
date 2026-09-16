@@ -8,6 +8,9 @@ const SETTINGS_NAMESPACE = 'dsh-shutdown'
 /** 与浏览器半 src/client/shutdown.ts 中的 EXIT_ROUTE 保持一致 */
 const EXIT_ROUTE = '/api/dsh-shutdown.exit'
 
+/** 请求退出后等待进程自行结束的上限，超过则强制退出 */
+const FORCE_EXIT_GRACE_MS = 8_000
+
 export const inject = ['connection']
 
 /**
@@ -61,12 +64,12 @@ export function apply(ctx: HostContext): void {
   })
 }
 
+/** 仅登记一次退出兜底，重复的退出请求不再叠加监听器与定时器 */
+let exitRequested = false
+
 /**
- * 安全结束 dsh：
- * - 首选 launcher 提供的 appExit —— 由 shutdown controller 接线，
- *   在 cordis 根 fiber dispose（所有插件逆序清理、webServer close）后自然退出；
- * - 非 launcher 宿主没有 appExit 时退回 SIGTERM（launcher 已注册信号处理，同样走优雅退出），
- *   并保留一个不被等待的硬退出兜底，避免信号不可用（如部分 Windows 环境）时进程残留。
+ * 结束 dsh 进程：请求优雅退出（launcher 的 appExit，缺席时退回 SIGTERM），
+ * 并在事件循环排空时或超过 FORCE_EXIT_GRACE_MS 后退出进程。
  */
 function requestExit(ctx: HostContext): void {
   let exit: AppExit | undefined
@@ -75,19 +78,25 @@ function requestExit(ctx: HostContext): void {
   } catch {
     exit = undefined
   }
+
+  if (!exitRequested) {
+    exitRequested = true
+    process.on('beforeExit', () => {
+      process.exit(0)
+    })
+    const cap = setTimeout(() => {
+      process.exit(0)
+    }, FORCE_EXIT_GRACE_MS)
+    cap.unref?.()
+  }
+
   if (typeof exit === 'function') {
     exit(0)
     return
   }
-
   try {
     process.kill(process.pid, 'SIGTERM')
   } catch {
-    // ignore：信号发送失败时由下方兜底退出
+    // ignore：信号不可用时由上方兜底定时器退出
   }
-  const fallback = setTimeout(() => {
-    process.exit(0)
-  }, 4500)
-  // 不阻止优雅退出路径自行结束进程；若进程仍在，这里保证最终退出
-  fallback.unref?.()
 }
