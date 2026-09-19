@@ -38,6 +38,7 @@ const css = `
   position: fixed; inset: 0; z-index: 2147483000;
   display: flex; align-items: center; justify-content: center;
   background: var(--dsw-alias-bg-mask-1, rgba(0, 0, 0, 0.45));
+  backdrop-filter: var(--dsw-mask-blur, blur(2px));
   font-family: var(--dsw-font-family, inherit);
 }
 .dsh-shutdown-card {
