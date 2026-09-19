@@ -28,7 +28,7 @@ export interface SlotRegisterOptions {
   id?: string
   /** keyed 卡片的寻址 key（如 `settings.plugin.item` 的 settings namespace） */
   key?: string
-  /** list 卡片升序排序，越大越靠后（右侧工具区中即越靠右） */
+  /** list 卡片升序排序，越大越靠后 */
   order?: number
   /** 关联的 locale 命名空间；设置后组件 props 中会注入翻译函数 t */
   locale?: string
@@ -87,19 +87,6 @@ export interface SettingsScope<T> {
 export interface SettingsScopeBinder {
   bind<T>(spec: { namespace: string }): SettingsScope<T>
 }
-
-/**
- * shell.overlay（root scope）槽位组件收到的标准 props 之一：会话列表状态选择器。
- * 只声明本插件实际读取的成员——current（当前会话 id）与 blank（是否为未产生
- * 回合的新会话，与宿主 ConversationRoot 的 summaryBlank 判定同源）。
- */
-export interface SessionsStateLike {
-  /** 当前激活的会话 id；hero（新建会话）相位下为 undefined */
-  current?: string
-  byId?: Record<string, { blank?: boolean } | undefined>
-}
-
-export type UseSessions = <T>(selector: (state: SessionsStateLike) => T) => T
 
 /** 浏览器半收到的 cordis 客户端上下文。 */
 export interface ClientContext {

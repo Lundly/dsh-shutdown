@@ -4,29 +4,18 @@
  * 类名统一使用 dsh-shutdown- 前缀避免与主界面/其他插件冲突。
  * 颜色一律使用 dsh 设计令牌（--dsw-*）并带中性回退值：令牌由宿主按
  * body[data-ds-dark-theme] 翻转明暗两套取值，插件自身不写主题分支。
+ * 末尾两条属性选择器覆写宿主右上角控件的间距，为常驻按钮让出位置。
  */
 const STYLE_ID = 'dsh-shutdown-styles'
 
 const css = `
-.dsh-shutdown-btn {
-  display: inline-flex; align-items: center; justify-content: center; gap: 4px;
-  min-width: 64px; height: 32px; padding: 6px 12px;
-  border: 0.5px solid var(--dsw-alias-border-l4, rgba(0, 0, 0, 0.12));
-  border-radius: 18px;
-  color: var(--dsw-alias-label-primary, #1f2329);
-  background: transparent;
-  font-family: var(--dsw-font-family, inherit);
-  font-size: 13px; font-weight: 400; line-height: 20px;
-  cursor: pointer;
-}
-.dsh-shutdown-btn:hover:not(:disabled) {
-  background: var(--dsw-alias-interactive-bg-hover, rgba(0, 0, 0, 0.05));
-}
-.dsh-shutdown-hero-anchor {
-  position: absolute; top: 10px; right: 12px;
+.dsh-shutdown-anchor {
+  position: absolute;
+  top: calc(var(--dsh-windows-titlebar-height, 0px) + 10px);
+  right: 12px;
   display: flex;
 }
-.dsh-shutdown-hero-btn {
+.dsh-shutdown-action {
   display: inline-flex; align-items: center; justify-content: center;
   width: 32px; height: 32px; padding: 0;
   border: 0.5px solid var(--dsw-alias-border-l4, rgba(0, 0, 0, 0.12));
@@ -36,8 +25,14 @@ const css = `
   font-family: var(--dsw-font-family, inherit);
   cursor: pointer;
 }
-.dsh-shutdown-hero-btn:hover:not(:disabled) {
+.dsh-shutdown-action:hover:not(:disabled) {
   background: var(--dsw-alias-interactive-bg-hover, rgba(0, 0, 0, 0.05));
+}
+:root [data-conversation-header-corner] {
+  margin-right: 24px;
+}
+:root [data-sidebar-right-panel='push'] [data-dockkit-strip] {
+  padding-right: 52px;
 }
 .dsh-shutdown-overlay {
   position: fixed; inset: 0; z-index: 2147483000;
@@ -122,9 +117,8 @@ const css = `
 `;
 
 export const cls = {
-  btn: "dsh-shutdown-btn",
-  heroAnchor: "dsh-shutdown-hero-anchor",
-  heroBtn: "dsh-shutdown-hero-btn",
+  anchor: "dsh-shutdown-anchor",
+  action: "dsh-shutdown-action",
   overlay: "dsh-shutdown-overlay",
   card: "dsh-shutdown-card",
   cardTitle: "dsh-shutdown-card-title",

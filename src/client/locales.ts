@@ -1,7 +1,6 @@
 export const NS = 'dsh-shutdown'
 
 const zh: Record<string, string> = {
-  'header.action': '关闭',
   'header.tooltip': '关闭 DSH',
   'dialog.title': '关闭 DSH',
   'dialog.description': '确认要关闭 DSH 吗？DSH 进程将安全退出，当前标签页会尝试自动关闭',
@@ -17,7 +16,6 @@ const zh: Record<string, string> = {
 }
 
 const en = {
-  'header.action': 'Close',
   'header.tooltip': 'Shut down DSH',
   'dialog.title': 'Shut down DSH',
   'dialog.description': 'Shut down DSH? The DSH process will exit safely and this tab will try to close itself',

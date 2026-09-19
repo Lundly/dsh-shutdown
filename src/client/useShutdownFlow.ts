@@ -5,9 +5,8 @@ import { isConfirmSkipped, setConfirmSkipped } from './storage'
 type Phase = 'idle' | 'confirm' | 'error'
 
 /**
- * 关闭流程的共享状态机：点击 → 确认弹窗（可跳过）→ 请求退出 → 兜底画面。
- * 顶栏按钮（普通会话）与浮层按钮（新建会话 hero 相位）两个注册点共用，
- * 确保弹窗、偏好与退出行为完全一致。
+ * 关闭流程的状态机：点击 → 确认弹窗（可跳过）→ 请求退出 → 兜底画面。
+ * 由右上角常驻按钮（shell.overlay 注册点）持有。
  */
 export function useShutdownFlow() {
   const [phase, setPhase] = useState<Phase>('idle')

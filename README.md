@@ -2,7 +2,7 @@
 
 为 [DeepSeek Harness (dsh)](https://github.com/deepseek-ai/deepseek-harness) 的 Web UI 添加**右上角关闭按钮**的插件：
 
-- 在 Web 界面右上角新增一个「关闭」按钮
+- 在 Web 界面右上角新增一个关闭按钮（图标按钮，悬停显示「关闭 DSH」），任何会话状态下常驻
 - 点击后弹出确认提示（可选择「不再显示」，之后点击按钮将直接关闭；可在**通用设置**中重新开启）
 - 确认后**安全结束整个 dsh 进程**（走 dsh launcher 的优雅退出路径：插件树逆序清理、Web 服务关闭后进程退出），并尝试自动关闭浏览器标签页
 - 若浏览器策略阻止脚本关闭标签页，页面会渲染「dsh 已安全关闭」的兜底画面，提醒你手动关闭标签页
@@ -42,7 +42,7 @@ dsh plugin --profile web remove dsh-shutdown
 
 bundle 成员变化需重启 profile 后生效。
 
-启动 dsh 后浏览器打开 Web 界面，即可在右上角看到「关闭」按钮。
+启动 dsh 后浏览器打开 Web 界面，即可在右上角看到关闭按钮。
 
 ## 从源码构建
 
