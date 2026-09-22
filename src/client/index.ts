@@ -40,7 +40,7 @@ export function apply(ctx: ClientContext): void {
       {
         name: 'settings.general.item',
         id: 'dsh-shutdown',
-        order: 120,
+        order: 90,
         locale: NS,
       },
       ShutdownSettingsCard,
