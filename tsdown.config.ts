@@ -20,7 +20,9 @@ const clientExternals = [
 ]
 
 export default defineConfig([
-  // Host 半：Node ESM，供 dsh loader 直接 import
+  // Host 半：Node ESM，供 dsh loader 直接 import。
+  // schemastery 由宿主提供：Config schema 的 volatile 标记要经 loader 的
+  // schema 比较与解析路径，必须与宿主同一份模块实例。
   {
     entry: ['src/index.ts'],
     outDir: 'lib',
@@ -28,6 +30,7 @@ export default defineConfig([
     platform: 'node',
     target: 'es2024',
     dts: false,
+    deps: { neverBundle: ['@deepseek-ai/schemastery'] },
     outputOptions: {
       // 固定输出文件名（package.json exports 指向 lib/index.js）
       entryFileNames: 'index.js',
@@ -41,7 +44,7 @@ export default defineConfig([
     format: 'cjs',
     platform: 'browser',
     target: 'es2024',
-    external: clientExternals,
+    deps: { neverBundle: clientExternals },
     outputOptions: {
       entryFileNames: 'client.js',
       banner:

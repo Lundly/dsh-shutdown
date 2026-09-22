@@ -33,10 +33,14 @@
   },
   "peerDependencies": {
     "@deepseek-ai/cordis": ">=4.0.0",
+    "@deepseek-ai/schemastery": ">=3.18.3",
     "react": ">=18.0.0"
   },
   "peerDependenciesMeta": {
     "@deepseek-ai/cordis": {
+      "optional": true
+    },
+    "@deepseek-ai/schemastery": {
       "optional": true
     },
     "react": {
@@ -44,6 +48,7 @@
     }
   },
   "devDependencies": {
+    "@deepseek-ai/schemastery": ">=3.18.3",
     "@types/node": "^24.3.0",
     "@types/react": "^18.3.12",
     "tsdown": "^0.22.14",

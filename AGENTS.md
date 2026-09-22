@@ -160,4 +160,4 @@ dsh 插件通过 `corids.patch.yml` 文件挂载，开发时快速验证参考�
 
 完整流程验证：`pnpm run build` 后 `dsh plugin --profile <profile> add .`，再用 `dsh --profile <profile> --dump-config` 确认配置层已生效。
 
-> 代理时不执行插件安装命令
+> 代理时不执行插件安装命令，不要擅自修改 `README.md`。

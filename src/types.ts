@@ -1,16 +1,31 @@
 /**
  * 本插件对 dsh 宿主服务的最小结构声明。
  *
- * 仅覆盖本插件实际调用的 API 面（依据官方文档 docs/subsystems/slots.md、
- * packages/client/connection/README.md、docs/cookbook/adding-a-settings-card.md
- * 以及官方示例插件 session-log-export 的公开用法）。类型仅在编译期使用，
+ * 仅覆盖本插件实际调用的 API 面（依据官方文档 docs/subsystems/settings.zh.md、
+ * docs/user/develop/basic/config.zh.md、docs/cookbook/adding-a-settings-card.zh.md
+ * 以及 packages/client/ui-settings 的公开用法）。类型仅在编译期使用，
  * 运行时全部由 dsh 宿主（Host 半）或浏览器 loader（Client 半）提供。
  */
 
-/** 偏好节的形状：Host 半 schema 与 Client 半 scope 的通用约定。 */
+/** 偏好节的形状：Host 半 Config schema 与 Client 半表单的通用约定。 */
 export interface ShutdownSettings {
   /** true = 点击「关闭」按钮不再弹确认 */
   skipConfirm: boolean
+}
+
+/**
+ * Config 中声明为 volatile 的字段解析出的稳定引用，值经 `.get()` 读取。
+ * 结构声明与 @deepseek-ai/cosmokit 的 Volatile 一致，避免依赖 cordis 的再导出。
+ */
+export interface Volatile<T> {
+  get(): T
+}
+
+/** 把 JSON 兼容值写进某个设置命名空间的路径操作。 */
+export interface SettingsPathOperation {
+  op: 'set' | 'unset'
+  path: string[]
+  value?: unknown
 }
 
 /** cordis effect：工厂函数，可返回清理函数（同步或异步）。 */
@@ -46,54 +61,51 @@ export interface LocaleService {
   register(namespace: string, dictionaries: Record<string, Record<string, string>>): unknown
 }
 
-/**
- * settings 子系统对 schema 的最小使用面（duck-typed schemastery 节点）。
- * 1. 作为函数调用：校验合并后的候选节并应用默认值（register、每次写入、外部手改均走此路径）；
- * 2. toJSON()：describe 时序列化为 wire envelope，客户端以 `new Schema(envelope)` 还原；
- * 3. redactSecrets 按 type/meta/dict/inner 结构遍历——本插件无 secret 字段，
- *    live 对象不声明这些属性时按 default 分支直通。
- */
-export interface SettingsSchemaLike<T> {
-  (data: unknown): T
-  toJSON(): unknown
-}
-
-/** Host 半 settings 服务：注册命名空间后即可读/写/持久化到 dsh 的 settings.yaml。 */
-export interface SettingsService {
-  register(namespace: string, schema: SettingsSchemaLike<unknown>): unknown
-}
-
-/** Client 半命名空间作用域的同步快照。 */
-export interface SettingsScopeSnapshot<T> {
-  /** loading = 首次读取未完成；ready = 有已接受的节；unavailable = 命名空间不可用或不可持久化 */
+/** 单个设置命名空间的同步快照。 */
+export interface ConfigFormSnapshot<T> {
+  /** loading = 首次读取未完成；ready = 有已接受的节；unavailable = 命名空间不可用或连接保持进程内偏好 */
   status: 'loading' | 'ready' | 'unavailable'
-  /** 最近一次接受的节（应用默认值后）；ready 前为 undefined */
+  /** 最近一次接受的节（schema 解析后）；ready 前为 undefined */
   value: T | undefined
+  /** 继承层（组合默认值）：清除字段后回落到的值 */
+  base: unknown
+  /** 已存储的用户层；字段在该层中「存在」即表示被覆盖 */
+  user: unknown
+  /** 下一次写入的修订栅栏 */
+  revision: number | undefined
   /** 宿主文档是否接受写入 */
   writable: boolean
+  /** host = 持久化到宿主文档；memory = 仅保留在浏览器进程内 */
+  mode: 'host' | 'memory'
 }
 
-/** Client 半命名空间作用域：镜像 Host 注册节，写入带 revision 乐观锁。 */
-export interface SettingsScope<T> {
-  getSnapshot(): SettingsScopeSnapshot<T>
+/**
+ * 一个 Host 插件条目的共享表单：已接受的值与排序后的写入队列，
+ * 由该条目的所有编辑者共用。
+ */
+export interface ConfigForm<T> {
+  getSnapshot(): ConfigFormSnapshot<T>
+  /** 订阅快照替换；返回退订函数 */
   subscribe(listener: () => void): () => void
-  /** 写入单个字段；返回值结算于写入与后续恢复读完成之后 */
-  set(field: string, value: unknown): Promise<void>
-  /** 清除单个字段，回落到 schema 默认值 */
-  unset(field: string): Promise<void>
+  /** 提交一次原子路径操作；返回宿主是否接受 */
+  mutate(operations: readonly SettingsPathOperation[], expectedRevision?: number): Promise<boolean>
+  /** 写入单个字段；返回宿主是否接受 */
+  set(field: string, value: unknown): Promise<boolean>
+  /** 清除单个字段，回落到继承层；返回宿主是否接受 */
+  unset(field: string): Promise<boolean>
 }
 
-/** Client 半 settingsScope 服务：按命名空间绑定作用域，绑定挂载在调用方生命周期上。 */
-export interface SettingsScopeBinder {
-  bind<T>(spec: { namespace: string }): SettingsScope<T>
+/** Client 半 configForms 服务：按 profile 条目 id 取得该条目的共享表单。 */
+export interface ConfigFormsService {
+  get<T>(entryId: string): ConfigForm<T>
 }
 
 /** 浏览器半收到的 cordis 客户端上下文。 */
 export interface ClientContext {
   slots: SlotsService
   locale: LocaleService
-  /** 偏好持久化作用域（inject 中声明 settingsScope 后保证可用） */
-  settingsScope: SettingsScopeBinder
+  /** 当前 profile 条目的设置表单（inject 中声明 configForms 后保证可用） */
+  configForms: ConfigFormsService
   effect(factory: EffectFactory, label?: string): unknown
 }
 
@@ -119,9 +131,5 @@ export interface HostContext {
   connection: ConnectionService
   /** 读取可选服务（如 appExit）；不存在时返回 undefined */
   get(key: string): unknown
-  /** 声明可选服务依赖：deps 全部可用时以同构 ctx 执行 callback，服务缺席时回调不执行 */
-  inject(deps: readonly string[], callback: (ctx: HostContext) => void): void
-  /** settings 子系统；经 inject(['settings']) 保证可用，其余时机保持可选 */
-  settings?: SettingsService
   effect(factory: EffectFactory, label?: string): unknown
 }

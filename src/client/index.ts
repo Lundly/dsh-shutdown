@@ -1,21 +1,20 @@
 import type { ClientContext, ShutdownSettings } from '../types'
 import { NS, dictionaries } from './locales'
 import { ShutdownAction } from './Action'
-import { SETTINGS_NAMESPACE, bindConfirmScope } from './storage'
+import { SETTINGS_ENTRY_ID, bindConfirmForm } from './storage'
 import { ShutdownSettingsCard } from './SettingsCard'
 import { injectStyles } from './styles'
 
 /**
  * 依赖的浏览器端服务：slots（槽位注册表）、locale（词典注册）、
- * settingsScope（偏好持久化作用域）。remote 携带 settings 的失效转发，
- * 是 settingsScope 订阅的载体（与官方 ui-theme 插件的声明一致）。
+ * configForms（当前 profile 条目的设置表单，读写「不再显示确认提示」）。
  */
-export const inject = ['slots', 'locale', 'remote', 'settingsScope']
+export const inject = ['slots', 'locale', 'configForms']
 
 export function apply(ctx: ClientContext): void {
   injectStyles()
 
-  bindConfirmScope(ctx.settingsScope?.bind<ShutdownSettings>({ namespace: SETTINGS_NAMESPACE }))
+  bindConfirmForm(ctx.configForms.get<ShutdownSettings>(SETTINGS_ENTRY_ID))
 
   ctx.effect(() => {
     ctx.locale.register(NS, dictionaries)
@@ -35,14 +34,13 @@ export function apply(ctx: ClientContext): void {
     ),
   )
 
-  // 设置页 → Plugin configuration：卡片用于重新开启「关闭前确认提示」。
+  // 设置页 → 通用分区：卡片用于重新开启「关闭前确认提示」。
   ctx.slots.inject('settings.general.item', () =>
     ctx.slots.register(
       {
         name: 'settings.general.item',
         id: 'dsh-shutdown',
         order: 120,
-        key: NS,
         locale: NS,
       },
       ShutdownSettingsCard,
